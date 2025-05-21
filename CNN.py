@@ -10,17 +10,23 @@ class CNN(nn.Module):
         self.flatten = nn.Flatten()
 
         self.convoluted_reLu_stack = nn.Sequential(
-            #first cnn layer with relu
-            nn.Conv1d(1, 16, 3, 1,1),
-            nn.ReLU(),          
-            nn.Conv1d(16,32, 3, 1, 1),
-            nn.ReLU(),
-            nn.Conv1d(32, 64, 3, 1, 1),
-            nn.ReLU(),
-            #nn.Linear(64, 5)
+            nn.Conv2d(3, 16, 3, 1, 1),
+            nn.LeakyReLU(),          
+            nn.MaxPool2d(2,2),
+
+            nn.Conv2d(16,32, 3, 1, 1),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2,2),
+
+            nn.Conv2d(32, 64, 3, 1, 1),
+            nn.LeakyReLU(),
+
+            nn.AdaptiveAvgPool2d((1,1)),
+            nn.Flatten(),
+            nn.Linear(64, 3)
         )
 
     def forward(self, x):
-        x = self.flatten(x)
+        #x = self.flatten(x)
         logits = self.convoluted_reLu_stack(x)
         return logits   
