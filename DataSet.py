@@ -2,7 +2,7 @@ from torch.utils.data import Dataset, ImageFolder
 import random
 
 class DataSet(Dataset):
-    def __init__(self, root='data', train=True, transform=None):
+    def __init__(self, root='input-photos', train=True, transform=None):
         self.basicData = ImageFolder(root=root, transform=transform)
         self.transform = transform
         # Shuffle indices for all images
