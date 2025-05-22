@@ -57,6 +57,22 @@ def epoch_train(epoch_index: int):
         optimizer.step()
     return loss
 
+best_vloss = 1_000_000.
+
 for i in range(10):
+    print("Epoch: " + str((i+1)))
+    brain.train(True)
     loss_for_epoch = epoch_train(i)
-    print("Loss for epoch " + str(i) + ": " + str(loss_for_epoch))
+    
+    brain.eval()
+    torch.no_grad()
+    avg_loss = loss_for_epoch / (i+1)
+    print("Loss: {}".format(avg_loss))
+    
+    if avg_loss < best_vloss:
+        best_vloss = avg_loss
+        brain_filename = 'models/brain_{}_{}'.format("first", (i+1))
+        if  os.path.exists(brain_filename):
+            os.remove(brain_filename)
+            
+        torch.save(brain.state_dict(), brain_filename)
