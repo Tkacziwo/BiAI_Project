@@ -147,3 +147,9 @@ class DataFilter:
         Get the filtered data.
         """
         return self.filteredData.getAnnotation(photo)
+    
+    def getOneColorAnnotation(self, photo: str):
+        return self.colorAnnotations.getOneColorAnnotation(photo)
+
+    def getDictionary(self):
+        return self.colorAnnotations
