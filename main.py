@@ -9,7 +9,7 @@ import imageio.v2 as iio
 import matplotlib.pyplot as plt
 from torchvision import transforms
 from PIL import Image
-
+import brainTrainer as trainer
 
 def rgb_to_tensor(rgb: str):
     red = int(rgb[0:2], 16)
@@ -42,37 +42,59 @@ loss_fn = torch.nn.MSELoss()
 
 #training loop
 
-brain = CNN.CNN().to(device)
-optimizer = torch.optim.SGD(brain.parameters(), lr=0.001, momentum=0.9)
+# brain = CNN.CNN().to(device)
+# optimizer = torch.optim.SGD(brain.parameters(), lr=0.001, momentum=0.9)
 
 
-def epoch_train(epoch_index: int):
-    expected_result_rgb = tensor_rgb
-    expected_result_rgb = torch.unsqueeze(expected_result_rgb, 0)
-    for i in range(100):
-        optimizer.zero_grad()
-        cnn_result = brain(tensor)
-        loss = loss_fn(cnn_result, expected_result_rgb)
-        loss.backward()
-        optimizer.step()
-    return loss
-
-best_vloss = 1_000_000.
-
-for i in range(10):
-    print("Epoch: " + str((i+1)))
-    brain.train(True)
-    loss_for_epoch = epoch_train(i)
+# def epoch_train(epoch_index: int):
+#     expected_result_rgb = tensor_rgb
+#     expected_result_rgb = torch.unsqueeze(expected_result_rgb, 0)
     
-    brain.eval()
-    torch.no_grad()
-    avg_loss = loss_for_epoch / (i+1)
-    print("Loss: {}".format(avg_loss))
+#     #for i, data in enumerate(training_loader):
+        
     
-    if avg_loss < best_vloss:
-        best_vloss = avg_loss
-        brain_filename = 'models/brain_{}_{}'.format("first", (i+1))
-        if  os.path.exists(brain_filename):
-            os.remove(brain_filename)
+#     for i in range(100):
+#         optimizer.zero_grad()
+#         cnn_result = brain(tensor)
+#         loss = loss_fn(cnn_result, expected_result_rgb)
+#         loss.backward()
+#         optimizer.step()
+#     return loss
+
+# # image_loader = ImageLoader.ImageLoader()
+# # training_set = image_loader.get_train_loader()
+# # validation_set = image_loader.get_test_loader()
+# # training_loader = torch.utils.data.DataLoader(training_set, batch_size=4, shuffle=True)
+# # validation_loader = torch.utils.data.DataLoader(validation_set, batch_size=4, shuffle=False)
+
+
+# best_vloss = 1_000_000.
+
+# for i in range(2):
+#     print("Epoch: " + str((i+1)))
+#     brain.train(True)
+#     loss_for_epoch = epoch_train(i)
+    
+#     brain.eval()
+#     torch.no_grad()
+#     avg_loss = loss_for_epoch / (i+1)
+#     print("Loss: {}".format(avg_loss))
+    
+#     if avg_loss < best_vloss:
+#         best_vloss = avg_loss
+#         brain_filename = 'models/brain_{}_{}'.format("first", (i+1))
+#         if  os.path.exists(brain_filename):
+#             os.remove(brain_filename)
             
-        torch.save(brain.state_dict(), brain_filename)
+#         torch.save(brain.state_dict(), brain_filename)
+
+#train brain for 10 epochs
+single_image_brain_trainer = trainer.SingleImageBrainTrainer(tensor,tensor_rgb,device,loss_fn)
+single_image_brain_trainer.train_brain(10)
+
+trained_single_image_brain = single_image_brain_trainer.get_model()
+
+trained_single_image_brain.eval()
+trained_output = trained_single_image_brain(tensor)
+print("trained output: {}".format(trained_output))
+print("correct result: {}".format(tensor_rgb))
