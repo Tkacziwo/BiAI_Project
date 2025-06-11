@@ -68,26 +68,26 @@ class ImageColorDataSet(Dataset):
     def switchOnValidating(self):
         self.data = self.valData
 
-def hex_to_rgb_vector( hex_color):
-    hex_color = hex_color.lstrip('#')
-    r, g, b = [int(hex_color[i:i+2], 16) / 255.0 for i in (0, 2, 4)]
-    return [r, g, b]
+
     
 #Example usage
 #Custom ImageLoader not needed, for nn training use basic DataLoader from torch.utils.data
-"""
-colorsPath = os.path.join(os.path.curdir, 'expected-results/AdrianR_2025_03_20-13_05_22.txt')
+
+colorsPath = os.path.join(os.path.curdir, 'expected-results')
 dataFilter = DataFilter.DataFilter()
-dataFilter.loadColorAnnotations(colorsPath)
+for filename in os.listdir(colorsPath):
+    if "_Time" not in filename:
+        dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
+
+dataFilter.filterData()
 data = ImageColorDataSet(root='input-photos', annotations=ColorAnnotations(), train=True, transform=None)
 
 colorAnnotations = dataFilter.getData("000000010432.jpg")
-print(colorAnnotations.getOneColor())
-print(colorAnnotations.getTwoColors())
-print(colorAnnotations.getThreeColors())
-print(colorAnnotations.getFourColors())
-print(colorAnnotations.getFiveColors())
-colorTensor = torch.tensor([hex_to_rgb_vector(c) for c in colorAnnotations.getOneColor()], dtype=torch.float32)
+print(colorAnnotations[1])
+print(colorAnnotations[2])
+print(colorAnnotations[3])
+print(colorAnnotations[4])
+print(colorAnnotations[5])
+"""colorTensor = torch.tensor([hex_to_rgb_vector(c) for c in colorAnnotations.getOneColor()], dtype=torch.float32)
 print(colorTensor)
-print(data.__getitem__(0))
-"""
+print(data.__getitem__(0))"""

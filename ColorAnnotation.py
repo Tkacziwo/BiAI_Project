@@ -68,8 +68,10 @@ class ColorAnnotations:
         self.dictionary = {}
 
     def addAnnotation(self, colorsArray: ColorsArray, image: str):
-
-        self.dictionary[image] = colorsArray
+        if self.dictionary.setdefault(image, None) == None:
+            self.dictionary[image] = [colorsArray]
+        else:
+            self.dictionary[image].append(colorsArray)
 
     def getAnnotation(self, image: str):
         if image in self.dictionary:
@@ -77,7 +79,7 @@ class ColorAnnotations:
         else:
             return None
         
-    def getOneColorAnnotation(self, image: str):
+    """def getOneColorAnnotation(self, image: str):
         if image in self.dictionary:
             return self.dictionary[image].getOneColor()
         else:
@@ -106,6 +108,6 @@ class ColorAnnotations:
             return self.dictionary[image].getFiveColors()
         else:
             return None
-
+"""
     def getAllAnnotations(self):
         return self.dictionary
