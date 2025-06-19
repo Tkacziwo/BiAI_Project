@@ -72,15 +72,15 @@ class MultipleImageBrainTrainer():
             z_handler = z_score_handler(image)
             unsqueezed_filtered_result = torch.unsqueeze(z_handler.get_filtered_averaged_result(), 0)
             image_tensor = image.get_image_tensor()
-            # for i in range(10):
-            self.optimizer.zero_grad()
-            cnn_result = self.brain(image_tensor)
-            loss = self.loss_function(cnn_result, unsqueezed_filtered_result)
-            loss.backward()
-            self.optimizer.step()
-            total_loss += loss.item()
+            for i in range(10):
+                self.optimizer.zero_grad()
+                cnn_result = self.brain(image_tensor)
+                loss = self.loss_function(cnn_result, unsqueezed_filtered_result)
+                loss.backward()
+                self.optimizer.step()
+                total_loss += loss.item()
             
-        return total_loss / (len(self.images_with_assigned_colors))
+        return total_loss / (len(self.images_with_assigned_colors)*10)
         
     def train_brain(self, epochs_num: int):
         best_vloss = 1_000_000.

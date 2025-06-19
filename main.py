@@ -15,6 +15,7 @@ import DataFilter
 from ImageLoader import ImageLoader as im
 from ColorsForImage import ColorsForImage as cfi
 from Z_Score_Handler import Z_Score_Handler as z_score_handler
+from ImageColorDataSet import ImageColorDataSet as icd
 
 def rgb_to_tensor(rgb: str):
 
@@ -52,8 +53,10 @@ if brainModels.__len__() == 0:
 
 
     print("Training brain... this may take a while...")
+
     #Using data filter to load expected results
     filter = DataFilter.DataFilter()
+    color_dataset = icd("input-photos", filter.getDictionary())
 
     directoryName = "expected-results"
     photos_with_assigned_colors = []
@@ -83,9 +86,9 @@ if brainModels.__len__() == 0:
     #declare loss function
     loss_fn = torch.nn.MSELoss()
 
-    #train brain for 40 epochs
+    #train brain for 5 epochs
     brain = trainer.MultipleImageBrainTrainer(photos_with_assigned_colors, device, loss_fn)
-    brain.train_brain(40)
+    brain.train_brain(5)
     print("Brain trained. Run application again to verify model")
 else:
     image_name = "000000034221.jpg"
