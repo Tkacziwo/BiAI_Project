@@ -69,10 +69,12 @@ class ImageColorDataSet(Dataset):
         self.data = self.valData
 
 
+
+
     
 #Example usage
 #Custom ImageLoader not needed, for nn training use basic DataLoader from torch.utils.data
-
+"""
 colorsPath = os.path.join(os.path.curdir, 'expected-results')
 dataFilter = DataFilter.DataFilter()
 for filename in os.listdir(colorsPath):
@@ -88,6 +90,7 @@ print(colorAnnotations[2])
 print(colorAnnotations[3])
 print(colorAnnotations[4])
 print(colorAnnotations[5])
-"""colorTensor = torch.tensor([hex_to_rgb_vector(c) for c in colorAnnotations.getOneColor()], dtype=torch.float32)
+colorTensor = torch.tensor([c for c in colorAnnotations.getOneColor()], dtype=torch.float32)
 print(colorTensor)
-print(data.__getitem__(0))"""
+print(data.__getitem__(0))
+"""
