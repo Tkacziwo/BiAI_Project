@@ -13,6 +13,9 @@ from torchvision import transforms
 from PIL import Image
 import brainTrainer as trainer
 import DataFilter
+from ImageLoader import ImageLoader as im
+from ColorsForImage import ColorsForImage as cfi
+from Z_Score_Handler import Z_Score_Handler as z_score_handler
 
 def rgb_to_tensor(rgb: str):
 

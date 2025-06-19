@@ -1,9 +1,11 @@
 import math
+import math
 import os
 import torch
 import CNN as CNN_Brain
 
 from torch import nn
+from Z_Score_Handler import Z_Score_Handler as z_score_handler
 from Z_Score_Handler import Z_Score_Handler as z_score_handler
 
 class SingleImageBrainTrainer():
@@ -157,7 +159,7 @@ class SingleImageMultipleResultsBrainTrainer():
     
     def get_model(self):
         return self.brain
-    
+
 class SingleImageMultipleResultsBrainTrainer():
     def __init__(self, 
                 image_tensor: torch.tensor, 
