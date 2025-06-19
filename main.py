@@ -16,6 +16,7 @@ import DataFilter
 from ImageLoader import ImageLoader as im
 from ColorsForImage import ColorsForImage as cfi
 from Z_Score_Handler import Z_Score_Handler as z_score_handler
+from ImageColorDataSet import ImageColorDataSet as icd
 
 def rgb_to_tensor(rgb: str):
 
