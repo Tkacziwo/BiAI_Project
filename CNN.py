@@ -27,6 +27,5 @@ class CNN(nn.Module):
         )
 
     def forward(self, x):
-        #x = self.flatten(x)
         logits = self.convoluted_reLu_stack(x)
         return logits   

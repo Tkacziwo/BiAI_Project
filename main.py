@@ -12,6 +12,9 @@ from torchvision import transforms
 from PIL import Image
 import brainTrainer as trainer
 import DataFilter
+from ImageLoader import ImageLoader as im
+from ColorsForImage import ColorsForImage as cfi
+from Z_Score_Handler import Z_Score_Handler as z_score_handler
 
 def rgb_to_tensor(rgb: str):
 
@@ -26,119 +29,90 @@ device = torch.accelerator.current_accelerator().type if torch.accelerator.is_av
 print(f"Using {device} device")
 
 #loading of previously saved "good" model if none, train again
-
-#image loading -> to change to data loader
-img = iio.imread("input-photos/000000010432.jpg")
-transform = transforms.Compose([transforms.ToTensor()])
-tensor = transform(img)
-tensor = torch.unsqueeze(tensor, 0)
-
-#Using data filter to load expected results
-filter = DataFilter.DataFilter()
-
-directoryName = "expected-results"
-colorList = []
-
-for name in os.listdir(directoryName):
-    if not name.endswith('Time.txt'):
-        filePath = os.path.join(directoryName, name)
-        filter.loadColorAnnotations(filePath)
-
-        oneColor = filter.getOneColorAnnotation("000000010432.jpg")
-        string = oneColor[0].lstrip('#')
-        oneColorTensor = rgb_to_tensor(string)
-        colorList.append(oneColorTensor)
-
-#colorList has colors for one single photo
-
-#z score counting algorithm
-red_sum = 0
-green_sum = 0 
-blue_sum = 0
-for col in colorList:
-    red_sum += col[0]
-    green_sum += col[1]
-    blue_sum += col[2]
-
-red_avg = red_sum / len(colorList)
-green_avg = green_sum / len(colorList)
-blue_avg = blue_sum / len(colorList)
-
-red_sum = 0
-green_sum = 0
-blue_sum = 0
-
-for col in colorList:
-    red_sum += math.pow(col[0] - red_avg, 2)
-    green_sum += math.pow(col[1] - green_avg, 2)
-    blue_sum += math.pow(col[2] - blue_avg, 2)
-
-red_deviation = math.sqrt(red_sum / len(colorList))
-green_deviation = math.sqrt(green_sum / len(colorList))
-blue_deviation = math.sqrt(blue_sum / len(colorList))
+brainModels = []
+for modelName in os.listdir("models"):
+    brain = CNN.CNN()
+    path = "models/"+modelName
+    brain.load_state_dict(torch.load(path))
+    brainModels.append(brain)
 
 
-z_score_red = []
-z_score_green = []
-z_score_blue = []
+if brainModels.__len__() == 0:
+    print("No models found")
+    image_tensor_loader = im()
+    image_tensor_loader.load_input_photos_to_tensor("input-photos")
 
-for col in colorList:
-    z_score_red.append((col[0] - red_avg)/red_deviation)
-    z_score_green.append((col[1] - green_avg)/green_deviation)
-    z_score_blue.append((col[2] - blue_avg)/blue_deviation)
-
-print("Averages red, green, blue: {}, {}, {}".format(red_avg, green_avg, blue_avg))
-print("Deviation red green blue: {}, {}, {}".format(red_deviation, green_deviation, blue_deviation))
-
-print("Z score for red: {}".format(z_score_red))
-print("Z score for green: {}".format(z_score_green))
-print("Z score for blue: {}".format(z_score_blue))
+    loaded_images_tensors = image_tensor_loader.get_input_photo_tensors()
+    if loaded_images_tensors.count == 0:
+        print("Error while loading images")
+        exit()
+    else:
+        print("Loaded all images!")
 
 
-filtered_color_list = []
-filtered_z_score_list = []
-for i in range(len(colorList)):
-    if z_score_red[i] < 1.5 and z_score_red[i] > -1.5 and z_score_green[i] < 1.5 and z_score_green[i] > -1.5 and z_score_blue[i] < 1.5 and z_score_blue[i] > -1.5:
-        filtered_color_list.append(colorList[i])
-        filtered_z_score_list.append((z_score_red[i], z_score_green[i], z_score_blue[i]))
+
+    print("Training brain... this may take a while...")
+    #Using data filter to load expected results
+    filter = DataFilter.DataFilter()
+
+    directoryName = "expected-results"
+    photos_with_assigned_colors = []
+
+    for photo_name in image_tensor_loader.get_input_photo_file_names():
+        colors_for_image = cfi()
+        colorList = []
+        for name in os.listdir(directoryName):
+            if not name.endswith('Time.txt'):
+                filePath = os.path.join(directoryName, name)
+                filter.loadColorAnnotations(filePath)
+
+                oneColor = filter.getOneColorAnnotation(photo_name)
+                string = oneColor[0].lstrip('#')
+                oneColorTensor = rgb_to_tensor(string)
+                colorList.append(oneColorTensor)
+
+        img = iio.imread("input-photos/"+photo_name)
+        transform = transforms.Compose([transforms.ToTensor()])
+        image_tensor = transform(img)
+        image_tensor = torch.unsqueeze(image_tensor, 0)
+
+        colors_for_image.set_data(photo_name, colorList, image_tensor)
+        photos_with_assigned_colors.append(colors_for_image)
 
 
-print("Filtered colors: {}".format(filtered_color_list))
-print("Filtered z_score: {}".format(filtered_z_score_list))
+    #declare loss function
+    loss_fn = torch.nn.MSELoss()
 
-#average expected result
-averaged_expected_result_tensor = sum(filtered_color_list) / len(filtered_color_list)
+    #train brain for 40 epochs
+    brain = trainer.MultipleImageBrainTrainer(photos_with_assigned_colors, device, loss_fn)
+    brain.train_brain(40)
+    print("Brain trained. Run application again to verify model")
+else:
+    image_name = "000000034221.jpg"
+    img = iio.imread("input-photos/000000034221.jpg")
+    transform = transforms.Compose([transforms.ToTensor()])
+    tensor = transform(img)
+    tensor = torch.unsqueeze(tensor, 0)
+    color_list = []
+    filter = DataFilter.DataFilter()
+    for name in os.listdir("expected-results"):
+            if not name.endswith('Time.txt'):
+                filePath = os.path.join("expected-results", name)
+                filter.loadColorAnnotations(filePath)
 
-#loading of expected results
-# expectedResult = open("expected-results/AdrianR_2025_03_20-13_05_22.txt")
-# expectedResultTextLine = expectedResult.readline()
-# position = expectedResultTextLine.find('#') + 1
-# rgb = expectedResultTextLine[position:(len(expectedResultTextLine)-1):1]
-# tensor_rgb = rgb_to_tensor(rgb)
+                oneColor = filter.getOneColorAnnotation(image_name)
+                string = oneColor[0].lstrip('#')
+                oneColorTensor = rgb_to_tensor(string)
+                color_list.append(oneColorTensor)
 
-#declare loss function
-loss_fn = torch.nn.MSELoss()
+    test_colors_for_image = cfi()
+    test_colors_for_image.set_data(image_name, color_list, tensor)
+    z_handler = z_score_handler(test_colors_for_image)
+    expected_result = z_handler.get_filtered_averaged_result()
 
-#train brain for 10 epochs
-single_image_brain_trainer = trainer.SingleImageBrainTrainer(tensor,averaged_expected_result_tensor,device,loss_fn)
-single_image_brain_trainer.train_brain(10)
-
-trained_single_image_brain = single_image_brain_trainer.get_model()
-
-trained_single_image_brain.eval()
-trained_output = trained_single_image_brain(tensor)
-print("trained output: {}".format(trained_output))
-print("correct result: {}".format(averaged_expected_result_tensor))
-
-
-# ! works the same as single image brain trainer but worse ! #
-
-# single_image_multiple_results_trainer = trainer.SingleImageMultipleResultsBrainTrainer(tensor, colorList, device, loss_fn)
-# single_image_multiple_results_trainer.train_brain(10)
-
-# trained_single_image_multiple_result_brain = single_image_multiple_results_trainer.get_model()
-
-# trained_single_image_multiple_result_brain.eval()
-# trained_multiple_result_output = trained_single_image_multiple_result_brain(tensor)
-# print("trained multiple result output: {}".format(trained_multiple_result_output))
-# print("correct result: {}".format(averaged_expected_result_tensor))
+    #test
+    for brain in brainModels:
+        trained_brain = brain
+        trained_brain.eval()
+        trained_output = trained_brain(tensor)
+        print("Trained output: {}. Correct result: {}".format(trained_output, expected_result))
