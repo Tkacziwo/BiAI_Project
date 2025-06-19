@@ -6,6 +6,7 @@ import DataFilter
 import os
 from PIL import Image
 import torch
+from skimage import color
 
 class ImageColorDataSet(Dataset):
     def __init__(self, root='data', annotations = ColorAnnotations(), train=True, transform=None):
@@ -43,15 +44,17 @@ class ImageColorDataSet(Dataset):
         imagePath = os.path.join(os.path.curdir, self.imageFolder)
         imagePath = os.path.join(imagePath, imageName)
         image = Image.open(imagePath).convert('RGB')
+        image = color.rgb2lab(image)  
         label = self.annotations.getAnnotation(imageName)
         if label is None:
             label = [0, 0, 0]  # Default label if not found
 
         if self.transform:
             image = self.transform(image)
-            label = torch.tensor([self.hex_to_rgb_vector(c) for c in label.getOneColor()], dtype=torch.float32)
+            label = torch.tensor([c for c in label.getOneColor()], dtype=torch.float32)
         else:
             image = transforms.ToTensor()(image)
+            label = torch.tensor([c for c in label.getOneColor()], dtype=torch.float32)
 
         return image, label
     
@@ -69,10 +72,12 @@ class ImageColorDataSet(Dataset):
         self.data = self.valData
 
 
+
+
     
 #Example usage
 #Custom ImageLoader not needed, for nn training use basic DataLoader from torch.utils.data
-
+"""
 colorsPath = os.path.join(os.path.curdir, 'expected-results')
 dataFilter = DataFilter.DataFilter()
 for filename in os.listdir(colorsPath):
@@ -88,6 +93,7 @@ print(colorAnnotations[2])
 print(colorAnnotations[3])
 print(colorAnnotations[4])
 print(colorAnnotations[5])
-"""colorTensor = torch.tensor([hex_to_rgb_vector(c) for c in colorAnnotations.getOneColor()], dtype=torch.float32)
+colorTensor = torch.tensor([c for c in colorAnnotations.getOneColor()], dtype=torch.float32)
 print(colorTensor)
-print(data.__getitem__(0))"""
+print(data.__getitem__(0))
+"""
