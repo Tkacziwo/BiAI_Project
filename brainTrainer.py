@@ -1,5 +1,4 @@
 import math
-import math
 import os
 import torch
 import CNN as CNN_Brain
@@ -56,7 +55,7 @@ class FilteredBrainTrainer():
     
     def get_model(self):
         return self.brain
-    
+
 class SingleImageMultipleResultsBrainTrainer():
     def __init__(self, 
                 image_tensor: torch.tensor, 
