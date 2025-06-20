@@ -5,7 +5,6 @@ import brainTrainer as trainer
 import DataFilter
 from ImageLoader import ImageLoader as im
 from ImageColorDataSet import ImageColorDataSet as icd
-from ColorAnnotation import ColorsArray, ColorAnnotations
 
 def rgb_to_tensor(rgb: str):
 
