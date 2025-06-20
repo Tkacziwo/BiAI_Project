@@ -17,6 +17,7 @@ from ImageLoader import ImageLoader as im
 from ColorsForImage import ColorsForImage as cfi
 from Z_Score_Handler import Z_Score_Handler as z_score_handler
 from ImageColorDataSet import ImageColorDataSet as icd
+from ColorAnnotation import ColorsArray, ColorAnnotations
 
 def rgb_to_tensor(rgb: str):
 
@@ -27,7 +28,8 @@ def rgb_to_tensor(rgb: str):
     t = torch.tensor([red, green, blue], dtype=torch.float32) / 255.0
     return t
 
-device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+# device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+device = "cpu"
 print(f"Using {device} device")
 
 #loading of previously saved "good" model if none, train again
@@ -37,7 +39,6 @@ for modelName in os.listdir("models"):
     path = "models/"+modelName
     brain.load_state_dict(torch.load(path))
     brainModels.append(brain)
-
 
 if brainModels.__len__() == 0:
     print("No models found")
@@ -51,72 +52,80 @@ if brainModels.__len__() == 0:
     else:
         print("Loaded all images!")
 
-
-
     print("Training brain... this may take a while...")
 
-    #Using data filter to load expected results
+    # Using data filter to load expected results
     filter = DataFilter.DataFilter()
-    color_dataset = icd("input-photos", filter.getDictionary())
-
-    directoryName = "expected-results"
-    photos_with_assigned_colors = []
-
-    for photo_name in image_tensor_loader.get_input_photo_file_names():
-        colors_for_image = cfi()
-        colorList = []
-        for name in os.listdir(directoryName):
-            if not name.endswith('Time.txt'):
-                filePath = os.path.join(directoryName, name)
-                filter.loadColorAnnotations(filePath)
-
-                oneColor = filter.getOneColorAnnotation(photo_name)
-                string = oneColor[0].lstrip('#')
-                oneColorTensor = rgb_to_tensor(string)
-                colorList.append(oneColorTensor)
-
-        img = iio.imread("input-photos/"+photo_name)
-        transform = transforms.Compose([transforms.ToTensor()])
-        image_tensor = transform(img)
-        image_tensor = torch.unsqueeze(image_tensor, 0)
-
-        colors_for_image.set_data(photo_name, colorList, image_tensor)
-        photos_with_assigned_colors.append(colors_for_image)
+    colorsPath = os.path.join(os.path.curdir, 'expected-results')
+    dataFilter = DataFilter.DataFilter()
+    for filename in os.listdir(colorsPath):
+        if "_Time" not in filename:
+            dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
 
 
-    #declare loss function
-    loss_fn = torch.nn.MSELoss()
+    dataFilter.filterData()
 
-    #train brain for 5 epochs
-    brain = trainer.MultipleImageBrainTrainer(photos_with_assigned_colors, device, loss_fn)
-    brain.train_brain(5)
-    print("Brain trained. Run application again to verify model")
-else:
-    image_name = "000000034221.jpg"
-    img = iio.imread("input-photos/000000034221.jpg")
-    transform = transforms.Compose([transforms.ToTensor()])
-    tensor = transform(img)
-    tensor = torch.unsqueeze(tensor, 0)
-    color_list = []
-    filter = DataFilter.DataFilter()
-    for name in os.listdir("expected-results"):
-            if not name.endswith('Time.txt'):
-                filePath = os.path.join("expected-results", name)
-                filter.loadColorAnnotations(filePath)
+    image_color_dataset = icd("input-photos", dataFilter.filteredData)
+    filtered_brain = trainer.FilteredBrainTrainer(dataset= image_color_dataset,
+                                                  device = device,
+                                                  loss_function=torch.nn.MSELoss())
+    
+    filtered_brain.train_brain(20)
 
-                oneColor = filter.getOneColorAnnotation(image_name)
-                string = oneColor[0].lstrip('#')
-                oneColorTensor = rgb_to_tensor(string)
-                color_list.append(oneColorTensor)
+    image_color_dataset.switchOnTesting()
 
-    test_colors_for_image = cfi()
-    test_colors_for_image.set_data(image_name, color_list, tensor)
-    z_handler = z_score_handler(test_colors_for_image)
-    expected_result = z_handler.get_filtered_averaged_result()
-
-    #test
-    for brain in brainModels:
-        trained_brain = brain
-        trained_brain.eval()
-        trained_output = trained_brain(tensor)
+    brain = filtered_brain.get_model()
+    brain.eval()
+    for i in range(image_color_dataset.__len__()):
+        img, expected_result = image_color_dataset.__getitem__(i)
+        trained_output = brain(img)
         print("Trained output: {}. Correct result: {}".format(trained_output, expected_result))
+        
+    print("Brain trained. Run application again to verify model")
+
+    image_color_dataset.save_dataset()
+    exit(0)
+else:
+
+    colorsPath = os.path.join(os.path.curdir, 'expected-results')
+    dataFilter = DataFilter.DataFilter()
+    for filename in os.listdir(colorsPath):
+        if "_Time" not in filename:
+            dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
+
+
+    dataFilter.filterData()
+
+    image_color_dataset = icd()
+    image_color_dataset.load_predetermined_dataset("CreatedDataSet", dataFilter.filteredData)
+
+    last_model: int = brainModels.__len__() - 1
+    trained_brain = brainModels[last_model]
+    trained_brain.eval()
+
+    # Test model
+    image_color_dataset.switchOnTesting()
+    print("\n Testing model using test data \n")
+    for i in range(image_color_dataset.__len__()):
+        img_tensor, expected_result = image_color_dataset.get_item(i, "CreatedDataSet/test")
+        
+        output = trained_brain(img_tensor)
+        output_list = output[0].tolist()
+        expected_result_list = expected_result[0].tolist()
+        output_list = [f"{x:.4f}" for x in output_list]
+        expected_result_list = [f"{x:.4f}" for x in expected_result_list]
+        print("Trained output: {}. Correct result: {}.".format(list(map(str, output_list)), list(map(str, expected_result_list))))   
+    
+    image_color_dataset.switchOnValidating()
+    print("\nTesting model using validation data \n")
+    for i in range(image_color_dataset.__len__()):
+        img_tensor, expected_result = image_color_dataset.get_item(i, "CreatedDataSet/validate")
+        
+        output = trained_brain(img_tensor)
+        output_list = output[0].tolist()
+        expected_result_list = expected_result[0].tolist()
+        output_list = [f"{x:.4f}" for x in output_list]
+        expected_result_list = [f"{x:.4f}" for x in expected_result_list]
+        print("Trained output: {}. Correct result: {}.".format(list(map(str, output_list)), list(map(str, expected_result_list))))  
+
+    exit(0)
