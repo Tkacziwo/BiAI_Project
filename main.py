@@ -1,23 +1,10 @@
 import os
 import torch
-import math
-import math
-from torch import nn
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-import neuralNetwork
 import CNN
-import imageio.v2 as iio
-import matplotlib.pyplot as plt
-from torchvision import transforms
-from PIL import Image
 import brainTrainer as trainer
 import DataFilter
 from ImageLoader import ImageLoader as im
-from ColorsForImage import ColorsForImage as cfi
-from Z_Score_Handler import Z_Score_Handler as z_score_handler
 from ImageColorDataSet import ImageColorDataSet as icd
-from ColorAnnotation import ColorsArray, ColorAnnotations
 
 def rgb_to_tensor(rgb: str):
 
@@ -28,8 +15,8 @@ def rgb_to_tensor(rgb: str):
     t = torch.tensor([red, green, blue], dtype=torch.float32) / 255.0
     return t
 
-# device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
-device = "cpu"
+device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+
 print(f"Using {device} device")
 
 #loading of previously saved "good" model if none, train again
@@ -84,7 +71,6 @@ if brainModels.__len__() == 0:
     print("Brain trained. Run application again to verify model")
 
     image_color_dataset.save_dataset()
-    exit(0)
 else:
 
     colorsPath = os.path.join(os.path.curdir, 'expected-results')
@@ -128,4 +114,4 @@ else:
         expected_result_list = [f"{x:.4f}" for x in expected_result_list]
         print("Trained output: {}. Correct result: {}.".format(list(map(str, output_list)), list(map(str, expected_result_list))))  
 
-    exit(0)
+exit(0)

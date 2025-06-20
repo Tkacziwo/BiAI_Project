@@ -16,7 +16,7 @@ class FilteredBrainTrainer():
         self.optimizer = torch.optim.SGD(self.brain.parameters(), lr=0.001, momentum=0.9)
         self.loss_function = loss_function
         
-    def epoch_train(self, index: int):
+    def epoch_train(self):
         total_loss = 0.0
         divider = 0
 
@@ -41,7 +41,7 @@ class FilteredBrainTrainer():
             
         for i in range(epochs_num):
             self.brain.train(True)
-            loss_for_epoch = self.epoch_train(i)
+            loss_for_epoch = self.epoch_train()
             self.brain.eval()
             torch.no_grad()
             print("Epoch #{}. Loss: {}".format(i+1,loss_for_epoch))

@@ -2,8 +2,7 @@ from genericpath import isdir
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
-from ColorAnnotation import ColorAnnotations, ColorsArray
-import DataFilter
+from ColorAnnotation import ColorAnnotations
 import os
 from PIL import Image
 import torch
