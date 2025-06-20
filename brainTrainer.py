@@ -1,4 +1,3 @@
-import math
 import os
 import torch
 import CNN as CNN_Brain
@@ -6,10 +5,15 @@ from torch import nn
 from ImageColorDataSet import ImageColorDataSet
 
 class FilteredBrainTrainer():
+from ImageColorDataSet import ImageColorDataSet
+
+class FilteredBrainTrainer():
     def __init__(self, 
+                 dataset: ImageColorDataSet,
                  dataset: ImageColorDataSet,
                  device: str, 
                  loss_function: nn.MSELoss):
+        self.dataset = dataset
         self.dataset = dataset
         self.brain = CNN_Brain.CNN().to(device)
         self.optimizer = torch.optim.SGD(self.brain.parameters(), lr=0.001, momentum=0.9)
