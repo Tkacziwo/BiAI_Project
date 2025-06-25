@@ -76,12 +76,10 @@ class ImageColorDataSet(Dataset):
 
         if self.transform:
             image_tensor = self.transform(image)
-            # label = torch.tensor([c for c in label], dtype=torch.float32)
-            label = torch.tensor(label[1], dtype=torch.float32)
+            label = torch.tensor(label, dtype=torch.float32)
         else:
             image_tensor = transforms.ToTensor()(image).to(dtype = torch.float32)
-            # label = torch.tensor([c for c in label], dtype=torch.float32)
-            label = torch.tensor(label[1], dtype=torch.float32)
+            label = torch.tensor(label, dtype=torch.float32)
 
         image_tensor = torch.unsqueeze(image_tensor, 0)
         return image_tensor, label
@@ -93,18 +91,24 @@ class ImageColorDataSet(Dataset):
         image = Image.open(imagePath).convert('RGB')
         image = color.rgb2lab(image)  
         label = self.annotations.getAnnotation(imageName)
+
+        tensor_label_list : list[torch.Tensor] = [] 
+
         if label is None:
             label = [0, 0, 0]  # Default label if not found
 
         if self.transform:
             image = self.transform(image)
-            label = torch.tensor([c for c in label.getOneColor()], dtype=torch.float32)
+            label = torch.tensor(label, dtype=torch.float32)
         else:
-            image = transforms.ToTensor()(image)
-            label = torch.tensor([c for c in label.getOneColor()], dtype=torch.float32)
+            image = transforms.ToTensor()(image).to(dtype=torch.float32)
 
-        image_tensor = torch.unsqueeze(image_tensor, 0)
-        return image_tensor, label
+            for i in range(1, 6):
+                tensor_label_list.append(torch.tensor(label[i], dtype=torch.float32))
+            # label = torch.tensor(label, dtype=torch.float32)
+
+        image_tensor = torch.unsqueeze(image, 0)
+        return image_tensor, tensor_label_list
     
     def get_image_filename(self, idx):
         return self.data[idx]

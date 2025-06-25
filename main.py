@@ -2,7 +2,7 @@ import os
 import torch
 import CNN
 import brainTrainer as trainer
-import DataFilter
+from DataFilter import DataFilter
 from ImageLoader import ImageLoader as im
 from ImageColorDataSet import ImageColorDataSet as icd
 
@@ -42,9 +42,8 @@ if brainModels.__len__() == 0:
     print("Training brain... this may take a while...")
 
     # Using data filter to load expected results
-    filter = DataFilter.DataFilter()
     colorsPath = os.path.join(os.path.curdir, 'expected-results')
-    dataFilter = DataFilter.DataFilter()
+    dataFilter = DataFilter()
     for filename in os.listdir(colorsPath):
         if "_Time" not in filename:
             dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
@@ -74,7 +73,7 @@ if brainModels.__len__() == 0:
 else:
 
     colorsPath = os.path.join(os.path.curdir, 'expected-results')
-    dataFilter = DataFilter.DataFilter()
+    dataFilter = DataFilter()
     for filename in os.listdir(colorsPath):
         if "_Time" not in filename:
             dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
