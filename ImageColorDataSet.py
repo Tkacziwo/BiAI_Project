@@ -7,8 +7,11 @@ import os
 from PIL import Image
 import torch
 from skimage import color
+<<<<<<< multiple-results-training
 import imageio.v2 as iio
 import shutil
+=======
+>>>>>>> main
 
 class ImageColorDataSet(Dataset):
     def __init__(self, root='data', annotations = ColorAnnotations(), train=True, transform=None):
@@ -91,12 +94,17 @@ class ImageColorDataSet(Dataset):
         imagePath = os.path.join(os.path.curdir, self.imageFolder)
         imagePath = os.path.join(imagePath, imageName)
         image = Image.open(imagePath).convert('RGB')
+<<<<<<< multiple-results-training
         image = color.rgb2lab(image)
+=======
+        image = color.rgb2lab(image)  
+>>>>>>> main
         label = self.annotations.getAnnotation(imageName)
         if label is None:
             label = [0, 0, 0]  # Default label if not found
 
         if self.transform:
+<<<<<<< multiple-results-training
             image_tensor = self.transform(image)
             # label = torch.tensor([c for c in label], dtype=torch.float32)
             label = torch.tensor(label[1], dtype=torch.float32)
@@ -104,6 +112,13 @@ class ImageColorDataSet(Dataset):
             image_tensor = transforms.ToTensor()(image).to(dtype = torch.float32)
             # label = torch.tensor([c for c in label], dtype=torch.float32)
             label = torch.tensor(label[1], dtype=torch.float32)
+=======
+            image = self.transform(image)
+            label = torch.tensor([c for c in label.getOneColor()], dtype=torch.float32)
+        else:
+            image = transforms.ToTensor()(image)
+            label = torch.tensor([c for c in label.getOneColor()], dtype=torch.float32)
+>>>>>>> main
 
         image_tensor = torch.unsqueeze(image_tensor, 0)
         return image_tensor, label
@@ -157,6 +172,7 @@ class ImageColorDataSet(Dataset):
                     shutil.copy("input-photos/"+file, destination + "/train/")
                     break
 
+<<<<<<< multiple-results-training
         for name in self.testData:
             for file in os.listdir("input-photos"):
                 if file == name:
@@ -170,6 +186,10 @@ class ImageColorDataSet(Dataset):
                     break
         print("Save dataset to CreatedDataSetFolder")
         
+=======
+
+
+>>>>>>> main
     
 #Example usage
 #Custom ImageLoader not needed, for nn training use basic DataLoader from torch.utils.data
