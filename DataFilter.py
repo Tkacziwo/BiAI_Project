@@ -206,7 +206,11 @@ class DataFilter:
                 if image in specialImages:
                     clusteringDB = DBSCAN(eps=epsForSpecialImage[specialImagesCount][k-1], min_samples=2).fit(lab_colors)
                     labelsDB = clusteringDB.labels_
+<<<<<<< multiple-results-training
+                    #show_lab_clusters(image, k, lab_colors, labelsDB)
+=======
                     show_lab_clusters(image, k, lab_colors, labelsDB)
+>>>>>>> main
                 else:
                     clusteringDB = DBSCAN(eps=eps[k-1], min_samples=min_samples[k-1]).fit(lab_colors)
 

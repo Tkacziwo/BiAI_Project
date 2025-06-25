@@ -79,7 +79,7 @@ class ColorAnnotations:
         else:
             return None
         
-    """def getOneColorAnnotation(self, image: str):
+    def getOneColorAnnotation(self, image: str):
         if image in self.dictionary:
             return self.dictionary[image].getOneColor()
         else:
@@ -108,6 +108,6 @@ class ColorAnnotations:
             return self.dictionary[image].getFiveColors()
         else:
             return None
-"""
+
     def getAllAnnotations(self):
         return self.dictionary

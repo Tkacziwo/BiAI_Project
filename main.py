@@ -1,17 +1,13 @@
 import os
 import torch
-from torch import nn
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-import neuralNetwork
 import CNN
-import imageio.v2 as iio
-import matplotlib.pyplot as plt
-from torchvision import transforms
-from PIL import Image
 import brainTrainer as trainer
+import DataFilter
+from ImageLoader import ImageLoader as im
+from ImageColorDataSet import ImageColorDataSet as icd
 
 def rgb_to_tensor(rgb: str):
+
     red = int(rgb[0:2], 16)
     green = int(rgb[2:4], 16)
     blue = int(rgb[4:6], 16)
@@ -20,81 +16,102 @@ def rgb_to_tensor(rgb: str):
     return t
 
 device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+
 print(f"Using {device} device")
 
 #loading of previously saved "good" model if none, train again
+brainModels = []
+for modelName in os.listdir("models"):
+    brain = CNN.CNN()
+    path = "models/"+modelName
+    brain.load_state_dict(torch.load(path))
+    brainModels.append(brain)
 
-#image loading -> to change to data loader
-img = iio.imread("input-photos/000000010432.jpg")
-transform = transforms.Compose([transforms.ToTensor()])
-tensor = transform(img)
-tensor = torch.unsqueeze(tensor, 0)
+if brainModels.__len__() == 0:
+    print("No models found")
+    image_tensor_loader = im()
+    image_tensor_loader.load_input_photos_to_tensor("input-photos")
 
-#loading of expected results
-expectedResult = open("expected-results/AdrianR_2025_03_20-13_05_22.txt")
-expectedResultTextLine = expectedResult.readline()
-position = expectedResultTextLine.find('#') + 1
-rgb = expectedResultTextLine[position:(len(expectedResultTextLine)-1):1]
-tensor_rgb = rgb_to_tensor(rgb)
+    loaded_images_tensors = image_tensor_loader.get_input_photo_tensors()
+    if loaded_images_tensors.count == 0:
+        print("Error while loading images")
+        exit()
+    else:
+        print("Loaded all images!")
 
-#declare loss function
-loss_fn = torch.nn.MSELoss()
+    print("Training brain... this may take a while...")
 
-#training loop
+    # Using data filter to load expected results
+    filter = DataFilter.DataFilter()
+    colorsPath = os.path.join(os.path.curdir, 'expected-results')
+    dataFilter = DataFilter.DataFilter()
+    for filename in os.listdir(colorsPath):
+        if "_Time" not in filename:
+            dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
 
-# brain = CNN.CNN().to(device)
-# optimizer = torch.optim.SGD(brain.parameters(), lr=0.001, momentum=0.9)
 
+    dataFilter.filterData()
 
-# def epoch_train(epoch_index: int):
-#     expected_result_rgb = tensor_rgb
-#     expected_result_rgb = torch.unsqueeze(expected_result_rgb, 0)
+    image_color_dataset = icd("input-photos", dataFilter.filteredData)
+    filtered_brain = trainer.FilteredBrainTrainer(dataset= image_color_dataset,
+                                                  device = device,
+                                                  loss_function=torch.nn.MSELoss())
     
-#     #for i, data in enumerate(training_loader):
+    filtered_brain.train_brain(1)
+
+    image_color_dataset.switchOnTesting()
+
+    brain = filtered_brain.get_model()
+    brain.eval()
+    for i in range(image_color_dataset.__len__()):
+        img, expected_result = image_color_dataset.__getitem__(i)
+        trained_output = brain(img)
+        print("Trained output: {}. Correct result: {}".format(trained_output, expected_result))
         
+    print("Brain trained. Run application again to verify model")
+
+    image_color_dataset.save_dataset()
+else:
+
+    colorsPath = os.path.join(os.path.curdir, 'expected-results')
+    dataFilter = DataFilter.DataFilter()
+    for filename in os.listdir(colorsPath):
+        if "_Time" not in filename:
+            dataFilter.loadColorAnnotations(os.path.join(colorsPath, filename))
+
+
+    dataFilter.filterData()
+
+    image_color_dataset = icd()
+    image_color_dataset.load_predetermined_dataset("CreatedDataSet", dataFilter.filteredData)
+
+    last_model: int = brainModels.__len__() - 1
+    trained_brain = brainModels[last_model]
+    trained_brain.eval()
+
+    # Test model
+    image_color_dataset.switchOnTesting()
+    print("\n Testing model using test data \n")
+    for i in range(image_color_dataset.__len__()):
+        img_tensor, expected_result = image_color_dataset.get_item(i, "CreatedDataSet/test")
+        
+        output = trained_brain(img_tensor)
+        output_list = output[0].tolist()
+        expected_result_list = expected_result[0].tolist()
+        output_list = [f"{x:.4f}" for x in output_list]
+        expected_result_list = [f"{x:.4f}" for x in expected_result_list]
+        print("Trained output: {}. Correct result: {}.".format(list(map(str, output_list)), list(map(str, expected_result_list))))   
     
-#     for i in range(100):
-#         optimizer.zero_grad()
-#         cnn_result = brain(tensor)
-#         loss = loss_fn(cnn_result, expected_result_rgb)
-#         loss.backward()
-#         optimizer.step()
-#     return loss
+    image_color_dataset.switchOnValidating()
+    print("\nTesting model using validation data \n")
+    for i in range(image_color_dataset.__len__()):
+        img_tensor, expected_result = image_color_dataset.get_item(i, "CreatedDataSet/validate")
+        
+        output = trained_brain(img_tensor)
+        output_list = output[0].tolist()
+        expected_result_list = expected_result[0].tolist()
+        output_list = [f"{x:.4f}" for x in output_list]
+        expected_result_list = [f"{x:.4f}" for x in expected_result_list]
+        print("Trained output: {}. Correct result: {}.".format(list(map(str, output_list)), list(map(str, expected_result_list))))  
 
-# # image_loader = ImageLoader.ImageLoader()
-# # training_set = image_loader.get_train_loader()
-# # validation_set = image_loader.get_test_loader()
-# # training_loader = torch.utils.data.DataLoader(training_set, batch_size=4, shuffle=True)
-# # validation_loader = torch.utils.data.DataLoader(validation_set, batch_size=4, shuffle=False)
-
-
-# best_vloss = 1_000_000.
-
-# for i in range(2):
-#     print("Epoch: " + str((i+1)))
-#     brain.train(True)
-#     loss_for_epoch = epoch_train(i)
-    
-#     brain.eval()
-#     torch.no_grad()
-#     avg_loss = loss_for_epoch / (i+1)
-#     print("Loss: {}".format(avg_loss))
-    
-#     if avg_loss < best_vloss:
-#         best_vloss = avg_loss
-#         brain_filename = 'models/brain_{}_{}'.format("first", (i+1))
-#         if  os.path.exists(brain_filename):
-#             os.remove(brain_filename)
-            
-#         torch.save(brain.state_dict(), brain_filename)
-
-#train brain for 10 epochs
-single_image_brain_trainer = trainer.SingleImageBrainTrainer(tensor,tensor_rgb,device,loss_fn)
-single_image_brain_trainer.train_brain(10)
-
-trained_single_image_brain = single_image_brain_trainer.get_model()
-
-trained_single_image_brain.eval()
-trained_output = trained_single_image_brain(tensor)
-print("trained output: {}".format(trained_output))
-print("correct result: {}".format(tensor_rgb))
+exit(0)

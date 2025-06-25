@@ -20,13 +20,20 @@ class CNN(nn.Module):
 
             nn.Conv2d(32, 64, 3, 1, 1),
             nn.LeakyReLU(),
+            nn.MaxPool2d(2,2),
+
+            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2,2),
+            
+            nn.Conv2d(128, 256, 3, 1, 1),
+            nn.LeakyReLU(),
 
             nn.AdaptiveAvgPool2d((1,1)),
             nn.Flatten(),
-            nn.Linear(64, 3)
+            nn.Linear(256, 3)
         )
 
     def forward(self, x):
-        #x = self.flatten(x)
         logits = self.convoluted_reLu_stack(x)
         return logits   
