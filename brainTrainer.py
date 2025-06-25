@@ -5,11 +5,7 @@ from torch import nn
 from ImageColorDataSet import ImageColorDataSet
 
 class FilteredBrainTrainer():
-from ImageColorDataSet import ImageColorDataSet
-
-class FilteredBrainTrainer():
     def __init__(self, 
-                 dataset: ImageColorDataSet,
                  dataset: ImageColorDataSet,
                  device: str, 
                  loss_function: nn.MSELoss):
