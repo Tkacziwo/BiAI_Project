@@ -57,7 +57,7 @@ if brainModels.__len__() == 0:
                                                   device = device,
                                                   loss_function=torch.nn.MSELoss())
     
-    filtered_brain.train_brain(20)
+    filtered_brain.train_brain(1)
 
     image_color_dataset.switchOnTesting()
 
