@@ -206,12 +206,12 @@ class DataFilter:
                 if image in specialImages:
                     clusteringDB = DBSCAN(eps=epsForSpecialImage[specialImagesCount][k-1], min_samples=2).fit(lab_colors)
                     labelsDB = clusteringDB.labels_
-                    #show_lab_clusters(image, k, lab_colors, labelsDB)
+                    # show_lab_clusters(image, k, lab_colors, labelsDB)
                 else:
                     clusteringDB = DBSCAN(eps=eps[k-1], min_samples=min_samples[k-1]).fit(lab_colors)
 
                     labelsDB = clusteringDB.labels_
-                #show_lab_clusters(image, k, lab_colors, labelsDB)
+                # show_lab_clusters(image, k, lab_colors, labelsDB)
                 #unique_labels = np.array(labelsDB) - [-1]  # odrzucamy outliery
 
                 mask, selected_labels = self.get_largest_k_clusters(labelsDB, k)
