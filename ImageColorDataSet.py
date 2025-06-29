@@ -76,10 +76,10 @@ class ImageColorDataSet(Dataset):
 
         if self.transform:
             image_tensor = self.transform(image)
-            label = torch.tensor(label, dtype=torch.float32)
+            label = torch.tensor(label, dtype=torch.float32, device='cuda')
         else:
-            image_tensor = transforms.ToTensor()(image).to(dtype = torch.float32)
-            label = torch.tensor(label, dtype=torch.float32)
+            image_tensor = transforms.ToTensor()(image).to(dtype = torch.float32, device='cuda')
+            label = torch.tensor(label, dtype=torch.float32, device='cuda')
 
         image_tensor = torch.unsqueeze(image_tensor, 0)
         return image_tensor, label
@@ -99,12 +99,12 @@ class ImageColorDataSet(Dataset):
 
         if self.transform:
             image = self.transform(image)
-            label = torch.tensor(label, dtype=torch.float32)
+            label = torch.tensor(label, dtype=torch.float32, device='cuda')
         else:
-            image = transforms.ToTensor()(image).to(dtype=torch.float32)
+            image = transforms.ToTensor()(image).to(dtype=torch.float32, device='cuda')
 
             for i in range(1, 6):
-                tensor_label_list.append(torch.tensor(label[i], dtype=torch.float32))
+                tensor_label_list.append(torch.tensor(label[i], dtype=torch.float32, device='cuda'))
             # label = torch.tensor(label, dtype=torch.float32)
 
         image_tensor = torch.unsqueeze(image, 0)
