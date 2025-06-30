@@ -108,23 +108,23 @@ else:
         path = "models/"+m
         if "_1_" in m:
             brain = CNN.CNN(1)
-            brain.load_state_dict(torch.load(path))
+            brain.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
             one_color_list.append(brain)
         elif "_2_" in m:
             brain = CNN.CNN(2)
-            brain.load_state_dict(torch.load(path))
+            brain.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
             two_color_list.append(brain)
         elif "_3_" in m:
             brain = CNN.CNN(3)
-            brain.load_state_dict(torch.load(path))
+            brain.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
             three_color_list.append(brain)
         elif "_4_" in m:
             brain = CNN.CNN(4)
-            brain.load_state_dict(torch.load(path))
+            brain.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
             four_color_list.append(brain)
         elif "_5_" in m:
             brain = CNN.CNN(5)
-            brain.load_state_dict(torch.load(path))
+            brain.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
             five_color_list.append(brain)
 
     trained_brain : any
@@ -158,11 +158,20 @@ else:
 
     output = trained_brain(tensor)
     output_list = output[0].tolist()
-    expected_result_list = expected_result[0].tolist()
-    output_list = [f"{x:.4f}" for x in output_list]
-    expected_result_list = [f"{x:.4f}" for x in expected_result_list]
-    print("Trained output: {}. Correct result: {}.".format(list(map(str, output_list)), list(map(str, expected_result_list))))
 
+    expected_result_list = []
+    for res in expected_result:
+        expected_result_list.append(res.tolist())
+    
+    expected_result_string: str = ""
+
+    for c in expected_result_list:
+        expected_result_string += " " + str(round(c[0], 4)) + " " + str(round(c[1], 4)) + " " + str(round(c[2], 4))
+
+    output_list = [f"{x:.4f}" for x in output_list]
+    # expected_result_string = [f"{x:.4f}" for x in expected_result_string]
+    print("Trained output: {}.".format(list(map(str, output_list))))
+    print("Correct result: [{}]".format(expected_result_string))
     # Test model
     # image_color_dataset.switchOnTesting()
     # print("\n Testing model using test data \n")
